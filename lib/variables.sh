@@ -26,6 +26,7 @@ ARCH_BASE_PACKAGES=(
   fd
   fzf
   git
+  go
   htop
   jq
   man-db
@@ -33,6 +34,7 @@ ARCH_BASE_PACKAGES=(
   nodejs
   npm
   openssh
+  podman
   python
   ripgrep
   rustup
