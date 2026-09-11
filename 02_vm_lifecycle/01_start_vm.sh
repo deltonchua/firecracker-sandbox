@@ -102,7 +102,7 @@ chown "${VM_UID}:${VM_GID}" "${VM_FC_CONFIG}"
 # 4. Launch firecracker with jailer
 # ------------------------------------------------------------
 
-echo "4. Lauch firecracker with jailer"
+echo "4. Launch firecracker with jailer"
 
 CGROUP_CPU_PERIOD_US=100000
 CGROUP_CPU_QUOTA_US=$((VCPU_COUNT * 100000)) # e.g. 200% -> "200000 100000"

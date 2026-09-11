@@ -8,7 +8,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/variables.sh"
 require_root
 
 # ------------------------------------------------------------
-# 1. Cerate per-VM group and user
+# 1. Create per-VM group and user
 # ------------------------------------------------------------
 
 echo "1. Create group and user for ${VM_ID}"
