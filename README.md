@@ -9,6 +9,8 @@ hardware-virtualized VMs suitable as hardened development/build environments or
 for running untrusted code. The guest image is **Arch Linux**, built with
 `pacstrap`.
 
+Intended for local development use only; not hardened or tested for production.
+
 > These scripts are Linux-only, must be run as **root**, and assume an
 > **Arch-based host** for building the guest image (see
 > [Prerequisites](#prerequisites) and [Porting to a non-Arch host/guest](#porting-to-a-non-arch-hostguest)).
