@@ -14,8 +14,8 @@ require_root
 echo "1. Refresh rootfs"
 
 VM_DIR_ROOTFS_IMAGE="${VM_DIR}/${ROOTFS_IMAGE}"
-if [[ -e "$VM_DIR_ROOTFS_IMAGE" ]]; then
-  rm "$VM_DIR_ROOTFS_IMAGE"
+if [[ -e "${VM_DIR_ROOTFS_IMAGE}" ]]; then
+  rm "${VM_DIR_ROOTFS_IMAGE}"
 fi
 cp --reflink=auto "${FC_IMAGES_DIR}/${ROOTFS_IMAGE}" "${VM_DIR_ROOTFS_IMAGE}" ||
   fail "Could not copy ${ROOTFS_IMAGE} into vm directory."
@@ -23,8 +23,8 @@ chmod 0600 "${VM_DIR_ROOTFS_IMAGE}"
 chown "${VM_UID}:${VM_GID}" "${VM_DIR_ROOTFS_IMAGE}"
 
 JAILER_DIR_ROOTFS_IMAGE="${JAILER_ROOT_DIR}/${ROOTFS_IMAGE}"
-if [[ -e "$JAILER_DIR_ROOTFS_IMAGE" ]]; then
-  rm "$JAILER_DIR_ROOTFS_IMAGE"
+if [[ -e "${JAILER_DIR_ROOTFS_IMAGE}" ]]; then
+  rm "${JAILER_DIR_ROOTFS_IMAGE}"
 fi
 ln "${VM_DIR}/${ROOTFS_IMAGE}" "${JAILER_DIR_ROOTFS_IMAGE}" ||
   fail "Could not hardlink ${ROOTFS_IMAGE} into jailer root directory."
@@ -41,10 +41,10 @@ echo "2. Configure networking"
 echo 1 | tee /proc/sys/net/ipv4/ip_forward >/dev/null
 
 # Create the tap device.
-ip tuntap add ${HOST_DEV_NAME} mode tap
+ip tuntap add "${HOST_DEV_NAME}" mode tap
 # Assign it the tap IP and start up the device.
-ip addr add "${HOST_IP}/30" dev ${HOST_DEV_NAME}
-ip link set ${HOST_DEV_NAME} up
+ip addr add "${HOST_IP}/30" dev "${HOST_DEV_NAME}"
+ip link set "${HOST_DEV_NAME}" up
 
 # Create nft table
 nft add table "${NFT_TABLE}"

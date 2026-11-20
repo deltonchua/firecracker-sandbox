@@ -42,7 +42,7 @@ echo "2. Copy images to ${VM_DIR}"
   fail "${VM_DIR} already exists."
 install -d -m 0700 -o "${VM_UID}" -g "${VM_GID}" "${VM_DIR}"
 
-for image in "$KERNEL_IMAGE" "$ROOTFS_IMAGE" "$DATA_IMAGE"; do
+for image in "${KERNEL_IMAGE}" "${ROOTFS_IMAGE}" "${DATA_IMAGE}"; do
   cp --reflink=auto "${FC_IMAGES_DIR}/${image}" "${VM_DIR}/${image}" ||
     fail "Could not copy ${image} into vm directory."
   chmod 0600 "${VM_DIR}/${image}"
@@ -61,7 +61,7 @@ echo "3. Copy images to ${JAILER_ROOT_DIR}"
 install -d -m 0700 -o "${VM_UID}" -g "${VM_GID}" "${JAILER_ROOT_DIR}"
 install -d -m 0700 -o "${VM_UID}" -g "${VM_GID}" "${JAILER_ROOT_DIR}/run"
 
-for image in "$KERNEL_IMAGE" "$ROOTFS_IMAGE" "$DATA_IMAGE"; do
+for image in "${KERNEL_IMAGE}" "${ROOTFS_IMAGE}" "${DATA_IMAGE}"; do
   ln "${VM_DIR}/${image}" "${JAILER_ROOT_DIR}/${image}" ||
     fail "Could not hardlink ${image} into jailer root directory."
   chmod 0600 "${JAILER_ROOT_DIR}/${image}"
