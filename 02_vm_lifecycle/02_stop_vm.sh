@@ -28,7 +28,7 @@ ip link del "${HOST_DEV_NAME}" ||
 # NOTE: Run the following only if you have no more guests
 # running on the host
 echo 0 | tee /proc/sys/net/ipv4/ip_forward >/dev/null
-nft delete table "${NFT_TABLE}"
+nft delete table inet "${NFT_TABLE}"
 
 # ------------------------------------------------------------
 # 3. Remove VM IP from known hosts
@@ -50,13 +50,13 @@ sudo -u "${SSH_USER}" ssh-keygen \
 echo "4. Delete VM rootfs"
 
 JAILER_DIR_ROOTFS_IMAGE="${JAILER_ROOT_DIR}/${ROOTFS_IMAGE}"
-if [[ -e "$JAILER_DIR_ROOTFS_IMAGE" ]]; then
-  rm "$JAILER_DIR_ROOTFS_IMAGE"
+if [[ -e "${JAILER_DIR_ROOTFS_IMAGE}" ]]; then
+  rm "${JAILER_DIR_ROOTFS_IMAGE}"
 fi
 
 VM_DIR_ROOTFS_IMAGE="${VM_DIR}/${ROOTFS_IMAGE}"
-if [[ -e "$VM_DIR_ROOTFS_IMAGE" ]]; then
-  rm "$VM_DIR_ROOTFS_IMAGE"
+if [[ -e "${VM_DIR_ROOTFS_IMAGE}" ]]; then
+  rm "${VM_DIR_ROOTFS_IMAGE}"
 fi
 
 # ------------------------------------------------------------

@@ -13,7 +13,7 @@ JAILER_EXEC_NAME="firecracker" # jailer derives this from --exec-file basename
 
 # Images
 KERNEL_VERSION="6.18"
-KERNEL_PATCH="44" # NOTE: Manually update patch version after 00_get_kernel.sh
+KERNEL_PATCH="62" # NOTE: Manually update patch version after 00_get_kernel.sh
 KERNEL_IMAGE="vmlinux-${KERNEL_VERSION}.${KERNEL_PATCH}"
 ROOTFS_IMAGE="rootfs.ext4"
 ROOTFS_SIZE_MB="4096"
@@ -66,7 +66,7 @@ VM_GROUP_NAME="${VM_USER_NAME}"
 VM_DIR="${FC_ROOT}/${VM_ID}"
 JAILER_ROOT_DIR="${JAILER_CHROOT_BASE_DIR}/${JAILER_EXEC_NAME}/${VM_ID}/root"
 VM_FC_CONFIG="${JAILER_ROOT_DIR}/config.json"
-KERNEL_BOOT_ARGS="reboot=k panic=1 pci=off nomodules tsc=reliable quiet 8250.nr_uarts=0 i8042.nokbd i8042.noaux systemd.hostname=${VM_ID}"
+KERNEL_BOOT_ARGS="reboot=k panic=1 pci=off ipv6.disable=1 nomodules tsc=reliable quiet 8250.nr_uarts=0 i8042.nokbd i8042.noaux systemd.hostname=${VM_ID}"
 # KERNEL_BOOT_ARGS="console=ttyS0 reboot=k panic=1 pci=off nomodules i8042.nokbd i8042.noaux systemd.hostname=${VM_ID}" # For debugging
 VCPU_COUNT=4
 MEM_SIZE_MIB=8192

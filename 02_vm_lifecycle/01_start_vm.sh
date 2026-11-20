@@ -37,22 +37,81 @@ chown "${VM_UID}:${VM_GID}" "${JAILER_DIR_ROOTFS_IMAGE}"
 
 echo "2. Configure networking"
 
-# Enable IPv4 forwarding
+# Let the kernel route packets between interfaces (guest <-> uplink)
 echo 1 | tee /proc/sys/net/ipv4/ip_forward >/dev/null
 
-# Create the tap device.
-ip tuntap add "${HOST_DEV_NAME}" mode tap
-# Assign it the tap IP and start up the device.
+# Create the tap device, owned by the user/group that will run Firecracker
+ip tuntap add "${HOST_DEV_NAME}" mode tap user "${VM_UID}" group "${VM_GID}"
+# Turn off IPv6 on the tap so it has no v6 address or link-local traffic
+sysctl -qw "net.ipv6.conf.${HOST_DEV_NAME}.disable_ipv6=1"
+# Give the host end of the /30 its address (the guest's gateway)
 ip addr add "${HOST_IP}/30" dev "${HOST_DEV_NAME}"
+# Bring the tap up
 ip link set "${HOST_DEV_NAME}" up
 
-# Create nft table
-nft add table "${NFT_TABLE}"
-nft "add chain ${NFT_TABLE} postrouting { type nat hook postrouting priority srcnat; policy accept; }"
-nft "add chain ${NFT_TABLE} filter { type filter hook forward priority filter; policy accept; }"
-# Add rules
-nft add rule "${NFT_TABLE}" postrouting ip saddr "${VM_IP}" oifname "${UPLINK_IFACE}" counter masquerade
-nft add rule "${NFT_TABLE}" filter iifname "${HOST_DEV_NAME}" oifname "${UPLINK_IFACE}" accept
+# Load the whole ruleset in one atomic nft transaction
+nft -f - <<EOF
+# One table in the inet family, so it sees both IPv4 and IPv6
+table inet ${NFT_TABLE} {
+  # NAT chain, runs after routing is decided
+  chain postrouting {
+    # Hook into postrouting at NAT priority; unmatched packets pass
+    type nat hook postrouting priority srcnat; policy accept;
+    # Rewrite the guest's source IP to the host's uplink IP so replies find their way back
+    ip saddr ${VM_IP} oifname "${UPLINK_IFACE}" masquerade
+  }
+
+  # Filter chain for traffic routed THROUGH the host (guest <-> other networks)
+  chain forward {
+    # Hook into forward; unmatched packets pass
+    type filter hook forward priority filter; policy accept;
+
+    # Let replies to connections that are already allowed come back
+    ct state established,related accept
+    # Block any new connection into the guest from other networks
+    oifname "${HOST_DEV_NAME}" drop
+
+    # Drop all IPv6 coming from the tap
+    iifname "${HOST_DEV_NAME}" meta nfproto ipv6 drop
+    # Drop packets whose source isn't the guest's real IP (anti-spoofing)
+    iifname "${HOST_DEV_NAME}" ip saddr != ${VM_IP} drop
+    # Block guest access to private, link-local (incl. cloud metadata), CGNAT,
+    # benchmarking, and multicast/reserved/broadcast IPv4 ranges
+    iifname "${HOST_DEV_NAME}" ip daddr {
+        10.0.0.0/8,
+        100.64.0.0/10,
+        169.254.0.0/16,
+        172.16.0.0/12,
+        192.168.0.0/16,
+        198.18.0.0/15,
+        224.0.0.0/3
+    } drop
+
+    # NOTE: the guest must use a public DNS resolver; private or host resolvers are blocked
+    # Allow web and DNS over tcp (53, 80, 443) out the uplink (public IPs only; see drop above)
+    iifname "${HOST_DEV_NAME}" oifname "${UPLINK_IFACE}" tcp dport { 53, 80, 443 } accept
+    # Allow DNS and QUIC over udp (53, 443) out the uplink (public IPs only)
+    iifname "${HOST_DEV_NAME}" oifname "${UPLINK_IFACE}" udp dport { 53, 443 } accept
+    # Allow the guest to ping out (IPv4)
+    iifname "${HOST_DEV_NAME}" oifname "${UPLINK_IFACE}" icmp type echo-request accept
+    # Anything else from the tap is dropped
+    iifname "${HOST_DEV_NAME}" drop
+  }
+
+  # Filter chain for traffic addressed TO the host itself (guest -> host)
+  chain input {
+    # Hook into input; unmatched packets pass
+    type filter hook input priority filter; policy accept;
+
+    # Allow replies to connections the host started (ssh/rsync into the guest)
+    iifname "${HOST_DEV_NAME}" ct state established,related accept
+    # Allow the guest to ping the host (IPv4)
+    iifname "${HOST_DEV_NAME}" icmp type echo-request accept
+    # Everything else from the guest to the host is dropped
+    iifname "${HOST_DEV_NAME}" drop
+  }
+}
+EOF
 
 # ------------------------------------------------------------
 # 3. Prepare Firecracker config.json
